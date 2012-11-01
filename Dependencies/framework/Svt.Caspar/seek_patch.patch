@@ -1,0 +1,83 @@
+Index: CasparItem.cs
+===================================================================
+--- CasparItem.cs	(revision 2532)
++++ CasparItem.cs	(working copy)
+@@ -36,6 +36,17 @@
+                 transition_.Duration = transition.Duration;
+             }
+         }
++        public CasparItem(int videoLayer, string clipname, Transition transition, int seek)
++        {
++            videoLayer_ = videoLayer;
++            clipname_ = clipname;
++            if (transition != null)
++            {
++                transition_.Type = transition.Type;
++                transition_.Duration = transition.Duration;
++                seek_ = seek;
++            }
++        }
+ 
+ 		public static CasparItem Create(System.Xml.XmlReader reader)
+ 		{
+@@ -66,6 +77,13 @@
+             set { videoLayer_ = value; }
+         }
+ 
++        private int seek_ = -1;
++        public int SeekPos
++        {
++            get { return seek_; }
++            set { seek_ = value; }
++        }
++
+ 		private Transition transition_ = new Transition();
+ 		public Transition Transition
+ 		{
+Index: Channel.cs
+===================================================================
+--- Channel.cs	(revision 2532)
++++ Channel.cs	(working copy)
+@@ -84,24 +84,26 @@
+ 
+ 		public bool LoadBG(CasparItem item)
+ 		{
+-            if (item.VideoLayer == -1)
++            if ((item.VideoLayer == -1) || (item.SeekPos == -1))
+ 			    Device.Server.SendString("LOADBG " + ID + "  " + item.Clipname + (string)(item.Loop ? " LOOP" : "") + " " + item.Transition);
+             else
+-                Device.Server.SendString("LOADBG " + ID + "-" + item.VideoLayer + "  " + item.Clipname + (string)(item.Loop ? " LOOP" : "") + " " + item.Transition);
++                Device.Server.SendString("LOADBG " + ID + "-" + item.VideoLayer + "  " + item.Clipname + (string)(item.Loop ? " LOOP" : "") + " " + item.Transition + " SEEK " + item.SeekPos);
+ 
+ 			return true;
+ 		}
++
++
+ 		public bool LoadBG(string clipname, bool loop, TransitionType transition, uint transitionDuration)
+ 		{
+ 			Device.Server.SendString("LOADBG " + ID + "  " + clipname + (string)(loop ? " LOOP" : "") + " " + transition.ToString() + " " + transitionDuration.ToString());
+ 			return true;
+ 		}
+-        public bool LoadBG(int videoLayer, string clipname, bool loop, TransitionType transition, uint transitionDuration)
++        public bool LoadBG(int videoLayer, string clipname, bool loop, TransitionType transition, uint transitionDuration, int seek)
+         {
+             if (videoLayer == -1)
+                 LoadBG(clipname, loop, transition, transitionDuration);
+             else
+-                Device.Server.SendString("LOADBG " + ID + "-" + videoLayer + "  " + clipname + (string)(loop ? " LOOP" : "") + " " + transition.ToString() + " " + transitionDuration.ToString());
++                Device.Server.SendString("LOADBG " + ID + "-" + videoLayer + "  " + clipname + (string)(loop ? " LOOP" : "") + " " + transition.ToString() + " " + transitionDuration.ToString() + " SEEK " + seek);
+             return true;
+         }
+ 
+@@ -167,8 +169,10 @@
+ 
+ 			return result;
+ 		}
+-	}
+ 
++        
++    }
++
+ 	public enum VideoMode
+ 	{
+ 		PAL,
