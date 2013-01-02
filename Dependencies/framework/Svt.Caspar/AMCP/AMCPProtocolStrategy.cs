@@ -6,8 +6,8 @@ namespace Svt.Caspar.AMCP
 {
 	internal class AMCPProtocolStrategy : Svt.Network.IProtocolStrategy
 	{
-	    readonly CasparDevice device_ = null;
-	    readonly AMCPParser parser_ = new AMCPParser();
+		CasparDevice device_ = null;
+		AMCPParser parser_ = new AMCPParser();
 
 		internal AMCPProtocolStrategy(CasparDevice device)
 		{

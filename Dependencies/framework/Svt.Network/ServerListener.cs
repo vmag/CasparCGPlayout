@@ -10,13 +10,13 @@ namespace Svt.Network
 {
     public class ServerListener
     {
-        readonly AsyncCallback readCallback = null;
-        readonly AsyncCallback writeCallback = null;
-        readonly AsyncCallback asyncAcceptCallback = null;
+        AsyncCallback readCallback = null;
+        AsyncCallback writeCallback = null;
+        AsyncCallback asyncAcceptCallback = null;
 
 
         TcpListener listener = null;
-        readonly List<RemoteHostState> clients = null;
+        List<RemoteHostState> clients = null;
 
         public event EventHandler<ClientConnectionEventArgs> ClientConnectionStateChanged;
         public event EventHandler<EventArgs> UnexpectedStop;

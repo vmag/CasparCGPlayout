@@ -1,6 +1,6 @@
-namespace CasparCGPlayout.components
+﻿namespace CasparCGPlayout.Components
 {
-    sealed partial class ExListBox
+    partial class exListBox
     {
         /// <summary>
         /// Required designer variable.

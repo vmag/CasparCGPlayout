@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 
 namespace Svt.Caspar
@@ -56,7 +55,7 @@ namespace Svt.Caspar
 
 		public override string ToString()
 		{
-            return Type.ToString() + " " + duration_.ToString(CultureInfo.InvariantCulture) + direction_.ToString();
+            return Type.ToString() + " " + duration_.ToString() + " " + direction_.ToString();
 		}
 	}
 }

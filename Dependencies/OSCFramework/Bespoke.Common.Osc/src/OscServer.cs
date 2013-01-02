@@ -55,7 +55,7 @@ namespace Bespoke.Common.Osc
         /// <summary>
         /// Gets the selected transport type.
         /// </summary>
-        public TransportType TransportType
+        public Bespoke.Common.Net.TransportType TransportType
         {
             get
             {
@@ -175,7 +175,7 @@ namespace Bespoke.Common.Osc
 		/// <param name="ipAddress">The local IP address to bind to.</param>
 		/// <param name="port">The UDP port to bind to.</param>
 		/// <remarks>TransmissionType.Unicast.</remarks>
-		public OscServer(TransportType transportType, IPAddress ipAddress, int port)
+		public OscServer(Bespoke.Common.Net.TransportType transportType, IPAddress ipAddress, int port)
 			: this(transportType, ipAddress, port, null, TransmissionType.Unicast, true)
 		{
 		}
@@ -187,7 +187,7 @@ namespace Bespoke.Common.Osc
 		/// <param name="multicastAddress">The multicast IP address to join.</param>
 		/// <remarks>TransmissionType.Multicast.</remarks>
 		public OscServer(int port, IPAddress multicastAddress)
-			: this(TransportType.Udp, IPAddress.Loopback, port, multicastAddress, TransmissionType.Multicast, true)
+			: this(Bespoke.Common.Net.TransportType.Udp, IPAddress.Loopback, port, multicastAddress, TransmissionType.Multicast, true)
 		{
 		}
 
@@ -200,7 +200,7 @@ namespace Bespoke.Common.Osc
 		/// <param name="multicastAddress">The multicast IP address to join.</param>
 		/// <param name="transmissionType">The transmission type for the server to use.</param>
 		/// <remarks>If ipAddress is specified, Unicast; otherwise, if multicastAddress is specified, Multicast.</remarks>
-        public OscServer(TransportType transportType, IPAddress ipAddress, int port, IPAddress multicastAddress, TransmissionType transmissionType)
+        public OscServer(Bespoke.Common.Net.TransportType transportType, IPAddress ipAddress, int port, IPAddress multicastAddress, TransmissionType transmissionType)
             : this(transportType, ipAddress, port, multicastAddress, transmissionType, true)
         {
         }
@@ -215,10 +215,10 @@ namespace Bespoke.Common.Osc
 		/// <param name="transmissionType">The transmission type for the server to use.</param>
         /// <param name="consumeParsingExceptions">Specifies the behavior of handling parsing exceptions.</param>
 		/// <remarks>If ipAddress is specified, Unicast; otherwise, if multicastAddress is specified, Multicast.</remarks>
-		public OscServer(TransportType transportType, IPAddress ipAddress, int port, IPAddress multicastAddress, TransmissionType transmissionType, bool consumeParsingExceptions)
+		public OscServer(Bespoke.Common.Net.TransportType transportType, IPAddress ipAddress, int port, IPAddress multicastAddress, TransmissionType transmissionType, bool consumeParsingExceptions)
 		{
-            Assert.IsTrue(transportType == TransportType.Udp || transportType == TransportType.Tcp);
-            if ((transportType == TransportType.Tcp) && (transmissionType != TransmissionType.Unicast))
+            Assert.IsTrue(transportType == Bespoke.Common.Net.TransportType.Udp || transportType == Bespoke.Common.Net.TransportType.Tcp);
+            if ((transportType == Bespoke.Common.Net.TransportType.Tcp) && (transmissionType != TransmissionType.Unicast))
             {
                 throw new InvalidOperationException("TCP must be used with TransmissionType.Unicast.");
             }
@@ -241,12 +241,12 @@ namespace Bespoke.Common.Osc
             
             switch (mTransportType)
             {
-                case TransportType.Udp:
+                case Bespoke.Common.Net.TransportType.Udp:
                     mUdpServer = new UdpServer(mIPAddress, mPort, mMulticastAddress, mTransmissionType);
                     mUdpServer.DataReceived += new UdpDataReceivedHandler(mUdpServer_DataReceived);
                     break;
 
-                case TransportType.Tcp:                   
+                case Bespoke.Common.Net.TransportType.Tcp:                   
                     mTcpServer = new TcpServer(mIPAddress, mPort, true, false, OscPacket.LittleEndianByteOrder);
                     mTcpServer.DataReceived += new TcpDataReceivedHandler(mTcpServer_DataReceived);
                     break;
@@ -288,11 +288,11 @@ namespace Bespoke.Common.Osc
 
             switch (mTransportType)
             {
-                case TransportType.Udp:
+                case Bespoke.Common.Net.TransportType.Udp:
                     mUdpServer.Start();
                     break;
 
-                case TransportType.Tcp:
+                case Bespoke.Common.Net.TransportType.Tcp:
                     mTcpServerThread = new Thread(mTcpServer.Start);
                     mTcpServerThread.Name = "OscServer Thread";
                     mTcpServerThread.Start();
@@ -312,14 +312,14 @@ namespace Bespoke.Common.Osc
 
             switch (mTransportType)
             {
-                case TransportType.Udp:
+                case Bespoke.Common.Net.TransportType.Udp:
                     if (mUdpServer != null)
                     {
                         mUdpServer.Stop();
                     }
                     break;
 
-                case TransportType.Tcp:
+                case Bespoke.Common.Net.TransportType.Tcp:
                     if (mTcpServer != null)
                     {
                         mTcpServer.Stop();
@@ -488,7 +488,7 @@ namespace Bespoke.Common.Osc
 
 		#endregion
 
-        private TransportType mTransportType;
+        private Bespoke.Common.Net.TransportType mTransportType;
 		private IPAddress mIPAddress;
 		private int mPort;
         private IPEndPoint mIPEndPoint;

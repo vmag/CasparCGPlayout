@@ -41,7 +41,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -70,12 +70,23 @@
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
     <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <OutputPath>bin\Debug\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <OutputPath>bin\Release\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AndyMace.Controls.DigitalStudioClock">
+      <HintPath>..\..\studiomonitor\StudioMonitor\AndyMace.Controls.DigitalStudioClock.dll</HintPath>
+    </Reference>
     <Reference Include="log4net">
       <HintPath>..\Dependencies\log4net\log4net.dll</HintPath>
     </Reference>
@@ -88,6 +99,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
@@ -98,24 +110,17 @@
     <Compile Include="AboutBox.Designer.cs">
       <DependentUpon>AboutBox.cs</DependentUpon>
     </Compile>
-    <Compile Include="ItemClasses\ListBoxCGItem.cs" />
-    <Compile Include="components\DigitalDisplayControl.designer.cs">
-      <DependentUpon>DigitalStudioClock.cs</DependentUpon>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Compile>
-    <Compile Include="components\DigitalStudioClock.cs">
-      <SubType>UserControl</SubType>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Compile>
     <Compile Include="components\exListBox.cs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="components\exListBox.designer.cs">
+    <Compile Include="components\exListBox.Designer.cs">
       <DependentUpon>exListBox.cs</DependentUpon>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="ItemClasses\ListBoxHOurMarker.cs" />
+    <Compile Include="ItemClasses\ListBoxSDIItem.cs" />
+    <Compile Include="ItemClasses\ListBoxCGItem.cs" />
     <Compile Include="ItemClasses\ListBoxItem.cs" />
+    <None Include="ItemClasses\ListBoxItem.cs.old" />
     <Compile Include="ItemClasses\ListboxTimeLineItem.cs" />
     <Compile Include="ItemClasses\ListBoxVideoItem.cs" />
     <Compile Include="Utils\NTPClient.cs" />
@@ -135,11 +140,6 @@
     <EmbeddedResource Include="AboutBox.resx">
       <DependentUpon>AboutBox.cs</DependentUpon>
       <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="components\DigitalDisplayControl.resx">
-      <DependentUpon>DigitalStudioClock.cs</DependentUpon>
-      <SubType>Designer</SubType>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Form1.en-GB.resx">
       <DependentUpon>Form1.cs</DependentUpon>
@@ -173,6 +173,15 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="caspar.ico" />
+    <EmbeddedResource Include="images\commercial.png" />
+    <EmbeddedResource Include="images\ident.png" />
+    <EmbeddedResource Include="images\programme.png" />
+    <None Include="resources\BBC-One1.jpg" />
+    <None Include="resources\BBC-One.jpg" />
+    <None Include="resources\media-seek-forward.png" />
+    <None Include="resources\media-seek-backward.png" />
+    <None Include="resources\arrow-right-3.png" />
+    <None Include="resources\arrow-left-3.png" />
     <EmbeddedResource Include="images\trans.png" />
     <EmbeddedResource Include="images\play.png" />
     <EmbeddedResource Include="images\tick.png" />
@@ -225,6 +234,7 @@
       <Name>Bespoke.Common</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

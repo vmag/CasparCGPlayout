@@ -123,6 +123,7 @@
     <Compile Include="CGTextFieldData.cs" />
     <Compile Include="CGXmlData.cs" />
     <Compile Include="Channel.cs" />
+    <Compile Include="Easing.cs" />
     <Compile Include="ICGComponentData.cs" />
     <Compile Include="MediaInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -142,7 +143,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="ClassDiagram1.cd" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

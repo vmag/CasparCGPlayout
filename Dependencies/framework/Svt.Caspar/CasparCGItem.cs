@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 
 using System.Xml;
@@ -80,7 +79,7 @@ namespace Svt.Caspar
 			set { bAutoPlay_ = value; }
 		}
 
-		private readonly List<CGDataPair> data_ = new List<CGDataPair>();
+		private List<CGDataPair> data_ = new List<CGDataPair>();
 		public List<CGDataPair> Data
 		{
 			get { return data_; }
@@ -140,8 +139,8 @@ namespace Svt.Caspar
 			writer.WriteStartElement("cgitem", Properties.Resources.CasparPlayoutSchemaURL);
 			writer.WriteAttributeString("templatename", TemplateName);
 			writer.WriteAttributeString("templatefolder", TemplateProfile);
-			writer.WriteAttributeString("layer", Layer.ToString(CultureInfo.InvariantCulture));
-            writer.WriteAttributeString("videoLayer", VideoLayer.ToString(CultureInfo.InvariantCulture));
+			writer.WriteAttributeString("layer", Layer.ToString());
+            writer.WriteAttributeString("videoLayer", VideoLayer.ToString());
 			if (Data.Count > 0)
 			{
 				writer.WriteStartElement("data", Properties.Resources.CasparPlayoutSchemaURL);

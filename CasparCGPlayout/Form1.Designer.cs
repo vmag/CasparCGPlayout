@@ -1,7 +1,4 @@
-﻿using CasparCGPlayout.components;
-using Svt.Caspar;
-
-namespace CasparCGPlayout
+﻿namespace CasparCGPlayout
 {
     partial class Form1
     {
@@ -64,14 +61,24 @@ namespace CasparCGPlayout
             this.btnHold = new System.Windows.Forms.Button();
             this.tmrCGTiming = new System.Windows.Forms.Timer(this.components);
             this.tmrNTPUpdate = new System.Windows.Forms.Timer(this.components);
-            this.ListRunningOrder = new CasparCGPlayout.components.ExListBox();
-            this.digitalStudioClock2 = new CasparCGPlayout.Controls.DigitalStudioClock();
-            this.digitalStudioClock1 = new CasparCGPlayout.Controls.DigitalStudioClock();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.pictureBox3 = new System.Windows.Forms.PictureBox();
+            this.pictureBox2 = new System.Windows.Forms.PictureBox();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.panel5 = new System.Windows.Forms.Panel();
+            this.label1 = new System.Windows.Forms.Label();
+            this.ListRunningOrder = new CasparCGPlayout.Components.exListBox();
+            this.digitalStudioClock1 = new AndyMace.Controls.DigitalStudioClock();
             this.statusStrip1.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel3.SuspendLayout();
             this.panel4.SuspendLayout();
+            this.panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.panel5.SuspendLayout();
             this.SuspendLayout();
             // 
             // statusStrip1
@@ -268,19 +275,54 @@ namespace CasparCGPlayout
             this.tmrNTPUpdate.Interval = 1024000;
             this.tmrNTPUpdate.Tick += new System.EventHandler(this.tmrNtpUpdateTick);
             // 
+            // panel1
+            // 
+            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.panel1.Controls.Add(this.pictureBox3);
+            this.panel1.Controls.Add(this.pictureBox2);
+            this.panel1.Controls.Add(this.pictureBox1);
+            resources.ApplyResources(this.panel1, "panel1");
+            this.panel1.Name = "panel1";
+            // 
+            // pictureBox3
+            // 
+            this.pictureBox3.Image = global::CasparCGPlayout.Properties.Resources.media_seek_forward;
+            resources.ApplyResources(this.pictureBox3, "pictureBox3");
+            this.pictureBox3.Name = "pictureBox3";
+            this.pictureBox3.TabStop = false;
+            // 
+            // pictureBox2
+            // 
+            this.pictureBox2.Image = global::CasparCGPlayout.Properties.Resources.media_seek_backward;
+            resources.ApplyResources(this.pictureBox2, "pictureBox2");
+            this.pictureBox2.Name = "pictureBox2";
+            this.pictureBox2.TabStop = false;
+            this.pictureBox2.Click += new System.EventHandler(this.pictureBox2_Click);
+            // 
+            // pictureBox1
+            // 
+            resources.ApplyResources(this.pictureBox1, "pictureBox1");
+            this.pictureBox1.Image = global::CasparCGPlayout.Properties.Resources.BBC_One1;
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.TabStop = false;
+            // 
+            // panel5
+            // 
+            this.panel5.BackColor = System.Drawing.SystemColors.ButtonShadow;
+            this.panel5.Controls.Add(this.label1);
+            resources.ApplyResources(this.panel5, "panel5");
+            this.panel5.Name = "panel5";
+            // 
+            // label1
+            // 
+            resources.ApplyResources(this.label1, "label1");
+            this.label1.Name = "label1";
+            // 
             // ListRunningOrder
             // 
-            this.ListRunningOrder.BackColor = System.Drawing.Color.DarkKhaki;
-            this.ListRunningOrder.FormattingEnabled = true;
+            this.ListRunningOrder.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawVariable;
             resources.ApplyResources(this.ListRunningOrder, "ListRunningOrder");
             this.ListRunningOrder.Name = "ListRunningOrder";
-            // 
-            // digitalStudioClock2
-            // 
-            this.digitalStudioClock2.BackColor = System.Drawing.Color.Black;
-            this.digitalStudioClock2.DigitColor = System.Drawing.Color.Red;
-            resources.ApplyResources(this.digitalStudioClock2, "digitalStudioClock2");
-            this.digitalStudioClock2.Name = "digitalStudioClock2";
             // 
             // digitalStudioClock1
             // 
@@ -293,8 +335,10 @@ namespace CasparCGPlayout
             // 
             resources.ApplyResources(this, "$this");
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.digitalStudioClock1);
+            this.Controls.Add(this.panel5);
             this.Controls.Add(this.ListRunningOrder);
-            this.Controls.Add(this.digitalStudioClock2);
+            this.Controls.Add(this.panel1);
             this.Controls.Add(this.btnHold);
             this.Controls.Add(this.panel4);
             this.Controls.Add(this.listBox1);
@@ -319,6 +363,11 @@ namespace CasparCGPlayout
             this.panel2.ResumeLayout(false);
             this.panel3.ResumeLayout(false);
             this.panel4.ResumeLayout(false);
+            this.panel1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            this.panel5.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -345,7 +394,6 @@ namespace CasparCGPlayout
         private System.Windows.Forms.ToolStripLabel tslAbout;
         private System.Windows.Forms.Timer tmrConnectionCheck;
         private System.Windows.Forms.Timer tmrClockStarts;
-        private CasparCGPlayout.Controls.DigitalStudioClock digitalStudioClock1;
         private System.Windows.Forms.ToolStripStatusLabel toolstriplabelAMCPConnected;
         private System.Windows.Forms.ToolStripStatusLabel toolstriplabelOSCConnected;
         private System.Windows.Forms.ToolStripStatusLabel toolstriplabelDBConnected;
@@ -357,9 +405,16 @@ namespace CasparCGPlayout
         private System.Windows.Forms.Timer tmrCGTiming;
         private System.Windows.Forms.Timer tmrNTPUpdate;
         private System.Windows.Forms.ProgressBar pgbcountdown;
-        private Controls.DigitalStudioClock digitalStudioClock2;
         private System.Windows.Forms.ProgressBar progressBar2;
-        private ExListBox ListRunningOrder;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.PictureBox pictureBox2;
+        private System.Windows.Forms.PictureBox pictureBox3;
+        private Components.exListBox ListRunningOrder;
+        private System.Windows.Forms.Panel panel5;
+        private System.Windows.Forms.Label label1;
+        private AndyMace.Controls.DigitalStudioClock digitalStudioClock1;
+        
     }
 }
 

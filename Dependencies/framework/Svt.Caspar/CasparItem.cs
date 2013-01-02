@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 using System.Xml;
 using System.Xml.XPath;
@@ -13,6 +12,7 @@ namespace Svt.Caspar
 		{
 			clipname_ = clipname;
 		}
+
         public CasparItem(int videoLayer, string clipname)
         {
             videoLayer_ = videoLayer;
@@ -38,7 +38,7 @@ namespace Svt.Caspar
             }
         }
 
-		 public CasparItem(int videoLayer, string clipname, Transition transition, int seek)
+        public CasparItem(int videoLayer, string clipname, Transition transition, int seek)
         {
             videoLayer_ = videoLayer;
             clipname_ = clipname;
@@ -46,7 +46,6 @@ namespace Svt.Caspar
             {
                 transition_.Type = transition.Type;
                 transition_.Duration = transition.Duration;
-                seek_ = seek;
             }
         }
 
@@ -58,6 +57,8 @@ namespace Svt.Caspar
 		}
 		private CasparItem()
 		{}
+
+       
 
 		private string clipname_;
 		public string Clipname
@@ -79,18 +80,33 @@ namespace Svt.Caspar
             set { videoLayer_ = value; }
         }
 
-        private int seek_ = 0;
-        public int seek
+        private int seek_ = -1;
+        public int Seek
         {
             get { return seek_; }
             set { seek_ = value; }
         }
-        
+
+        private int length_ = -1;
+        public int Length
+        {
+            get { return length_; }
+            set { length_ = value; }
+        }
+
 		private Transition transition_ = new Transition();
+        private int VideoLayer_2;
+        private string p;
+        private int p_2;
 		public Transition Transition
 		{
 			get { return transition_; }
 		}
+
+        public override string ToString()
+        {
+            return this.clipname_;
+        }
 
 		#region IXmlSerializable Members
 		public System.Xml.Schema.XmlSchema GetSchema()
@@ -110,6 +126,14 @@ namespace Svt.Caspar
             string videoLayer = reader["videoLayer"];
             if (!string.IsNullOrEmpty(videoLayer))
                 VideoLayer = Int32.Parse(videoLayer);
+
+            string seek = reader["seek"];
+            if (!string.IsNullOrEmpty(seek))
+                Seek = Int32.Parse(seek);
+
+            string length = reader["length"];
+            if (!string.IsNullOrEmpty(length))
+                Length = Int32.Parse(length);
 
 			string loop = reader["loop"];
 			bool bLoop = false;
@@ -136,21 +160,18 @@ namespace Svt.Caspar
 		{
 			writer.WriteStartElement("item", Properties.Resources.CasparPlayoutSchemaURL);
 			writer.WriteAttributeString("clipname", Clipname);
-            writer.WriteAttributeString("videoLayer", VideoLayer.ToString(CultureInfo.InvariantCulture));
+            writer.WriteAttributeString("videoLayer", VideoLayer.ToString());
+            writer.WriteAttributeString("seek", Seek.ToString());
+            writer.WriteAttributeString("length", Length.ToString());
 			writer.WriteAttributeString("loop", Loop.ToString());          
 
 			writer.WriteStartElement("transition");
 			writer.WriteAttributeString("type", Transition.Type.ToString());
-			writer.WriteAttributeString("duration", Transition.Duration.ToString(CultureInfo.InvariantCulture));
+			writer.WriteAttributeString("duration", Transition.Duration.ToString());
 			writer.WriteEndElement();
 	
 			writer.WriteEndElement();
 		}
 		#endregion
-
-        public override string ToString()
-        {
-            return Clipname + " ( layer:" + VideoLayer.ToString(CultureInfo.InvariantCulture) + " loop?: " + Loop.ToString() + " InFrames: " + seek.ToString(CultureInfo.InvariantCulture) + " ) ";
-        }
 	}
 }

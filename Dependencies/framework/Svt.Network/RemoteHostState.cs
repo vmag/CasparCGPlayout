@@ -10,7 +10,7 @@ namespace Svt.Network
 {
     public class RemoteHostState
     {
-        readonly ReaderWriterLockSlim streamLock = new ReaderWriterLockSlim();
+        //ReaderWriterLockSlim streamLock = new ReaderWriterLockSlim();
 
         internal RemoteHostState(TcpClient client)
         {
@@ -37,9 +37,6 @@ namespace Svt.Network
                 if (doNotify)
                     OnGotDataToSend();
             }
-
-            //Console.WriteLine(Encoding.ASCII.GetString(data));
-
         }
 
         internal bool Close()
@@ -52,11 +49,6 @@ namespace Svt.Network
                 Stream.Close();
                 Client.Close();
             }
-            
-            {
-                Stream = null;
-                Client = null;
-            }
 
             lock (SendQueue)
                 SendQueue.Clear();
@@ -67,34 +59,35 @@ namespace Svt.Network
         volatile bool _closed = false;
 
         //Protected by a ReaderWriterLock. Every access to the stream from ServerConnection/ServerListener need to be protected by a read-lock
-        private NetworkStream _stream = null;
-        internal NetworkStream Stream 
-        {
-            get
-            {
-                NetworkStream result = null;
-                try
-                {
-                    streamLock.EnterReadLock();
-                    result = _stream;
-                }
-                finally { streamLock.ExitReadLock(); }
+        //private NetworkStream _stream = null;
+        //internal NetworkStream Stream 
+        //{
+        //    get
+        //    {
+        //        NetworkStream result = null;
+        //        try
+        //        {
+        //            streamLock.EnterReadLock();
+        //            result = _stream;
+        //        }
+        //        finally { streamLock.ExitReadLock(); }
 
-                return result;
-            }
+        //        return result;
+        //    }
 
-            private set
-            {
-                try
-                {
-                    streamLock.EnterWriteLock();
-                    _stream = value;
-                }
-                finally
-                { streamLock.ExitWriteLock(); }
+        //    private set
+        //    {
+        //        try
+        //        {
+        //            streamLock.EnterWriteLock();
+        //            _stream = value;
+        //        }
+        //        finally
+        //        { streamLock.ExitWriteLock(); }
 
-            }
-        }
+        //    }
+        //}
+        internal NetworkStream Stream { get; private set; }
         TcpClient Client { get; set; }
 
         //does not need protection. usage is synchronous
@@ -109,12 +102,12 @@ namespace Svt.Network
         { 
             get 
             {
-                streamLock.EnterReadLock();
-                try
-                {
-                    return (!_closed) && Client.Connected;
-                }
-                finally { streamLock.ExitReadLock(); }
+                //streamLock.EnterReadLock();
+                //try
+                //{
+                    return (!_closed) ? Client.Connected : false;
+                //}
+                //finally { streamLock.ExitReadLock(); }
             } 
         }
 

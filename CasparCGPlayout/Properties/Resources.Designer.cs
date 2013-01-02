@@ -60,6 +60,34 @@ namespace CasparCGPlayout.Properties {
             }
         }
         
+        internal static System.Drawing.Bitmap arrow_left_3 {
+            get {
+                object obj = ResourceManager.GetObject("arrow-left-3", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap arrow_right_3 {
+            get {
+                object obj = ResourceManager.GetObject("arrow-right-3", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap BBC_One {
+            get {
+                object obj = ResourceManager.GetObject("BBC-One", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap BBC_One1 {
+            get {
+                object obj = ResourceManager.GetObject("BBC-One1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to Channel Dog Disabled.
         /// </summary>
@@ -193,6 +221,20 @@ namespace CasparCGPlayout.Properties {
         internal static string Form1_tmrConnectionCheckTick_Disconnected {
             get {
                 return ResourceManager.GetString("Form1_tmrConnectionCheckTick_Disconnected", resourceCulture);
+            }
+        }
+        
+        internal static System.Drawing.Bitmap media_seek_backward {
+            get {
+                object obj = ResourceManager.GetObject("media-seek-backward", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap media_seek_forward {
+            get {
+                object obj = ResourceManager.GetObject("media-seek-forward", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
     }

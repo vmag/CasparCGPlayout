@@ -16,11 +16,11 @@ using CasparCGPlayout.ItemClasses;
 using CasparCGPlayout.Properties;
 using CasparCGPlayout.Utils;
 using MySql.Data.MySqlClient;
-using Svt.Caspar;
-using Svt.Network;
 using log4net.Config;
 using log4net;
 using System.IO;
+using Svt.Caspar;
+using Svt.Network;
 
 namespace CasparCGPlayout
 {
@@ -35,10 +35,10 @@ namespace CasparCGPlayout
         private const int AnnouncerLayer = 2;
         private static readonly String VideoLayerString = VideoLayer.ToString(CultureInfo.InvariantCulture);
         private static readonly ILog Logger = LogManager.GetLogger(typeof (Form1));
-        private readonly Int32 _channelId;
+        
 
         //OSC Events
-        private readonly String _oscFilefps = "/channel/1/stage/layer/" + VideoLayerString + "/file/frame_rate";
+        private readonly String _oscFilefps = "/channel/1/stage/layer/" + VideoLayerString + "/file/fps";
         private readonly String _oscFilename = "/channel/1/stage/layer/" + VideoLayerString + "/filename";
         private readonly String _oscState = "/channel/1/stage/layer/" + VideoLayerString + "/state";
 
@@ -50,20 +50,25 @@ namespace CasparCGPlayout
         private string _timeLeft;
         private string _timeLength;
         private string _timePast;
+        private Int32 _frameLeft;
+        private Int32 _frameLength;
+        private Int32 _framePast;
         private MySqlConnection _connection;
         private OscServer _oscServer;
+        
+
+        public bool WaitingForChannelList = true;
 
         public Form1()
         {
             //Setup Logger*
-#pragma warning disable 612,618
             DOMConfigurator.Configure();
-#pragma warning restore 612,618
 
+           
+            
             InitializeComponent();
 
             //Wrap this to catch configuration errors
-
             try
             {
                 casparServerIp = ConfigurationManager.AppSettings["ServerIP"];
@@ -76,7 +81,7 @@ namespace CasparCGPlayout
                 casparDatabaseServerConnectiontimeout = ConfigurationManager.AppSettings["SQLConnectonTimeout"];
                 segueNotifier = Int32.Parse(ConfigurationManager.AppSettings["SegueNotifier"]);
                 videoMixTime = Int32.Parse(ConfigurationManager.AppSettings["VideoMixTime"]);
-                _channelId = Int32.Parse(ConfigurationManager.AppSettings["Channel"]);
+                casparServerChannelID = Int32.Parse(ConfigurationManager.AppSettings["Channel"]);
             }
             catch (ArgumentOutOfRangeException e)
             {
@@ -97,6 +102,7 @@ namespace CasparCGPlayout
         public string casparDatabaseServerDatabase { get; set; }
         public string casparDatabaseServerConnectiontimeout { get; set; }
         public bool boolHold { get; set; }
+        public int casparServerChannelID { get; set; }
 
         //OSC Vars
         public string casparAudchannels { get; set; }
@@ -123,14 +129,27 @@ namespace CasparCGPlayout
             SetupLogging();
             connectDatabase();
             setupCasparCGDevice();
+
+
+            while (WaitingForChannelList) { 
+                Logger.Debug("Waiting for Channel List....");
+            }
+
             ConnectOSCListener();
             populateWallDB();
-            CheckUserPriveledges();
-            SetupNTP();
+            //CheckUserPriveledges();
+            //SetupNTP();
+            
         }
 
         private void SetupLogging()
         {
+            Logger.Info("===========================");
+            Logger.Info("  CasparCGPlayout started  ");
+            Logger.Info("===========================");
+            changeControlStatus(true);
+            label1.Text = "Setup Logging ...";
+            changeControlStatus(false);
         }
 
 
@@ -196,7 +215,7 @@ namespace CasparCGPlayout
 
         private void handleOSCMessage(OscMessage oscMessage)
         {
-            Logger.Info(oscMessage.Address);
+            Logger.Debug(oscMessage.Address);
 
             if (oscMessage.Address == _oscFilefps)
             {
@@ -257,11 +276,7 @@ namespace CasparCGPlayout
             else if (oscMessage.Address == "/channel/1/mixer/audio/pFS")
             {
                 double dbfs = double.Parse(oscMessage.Data[0].ToString());
-
-               // Invoke(new MethodInvoker(delegate { progressBar1.Value = (int)Math.Round(dbfs * 10000); }));
-
-
-                //Console.WriteLine(.ToString());
+                //Invoke(new MethodInvoker(delegate { progressBar1.Value = (int)Math.Round(dbfs * 10000); }));
             }
             else if (oscMessage.Address == "/channel/1/stage/layer/1/speed")
             {
@@ -278,14 +293,17 @@ namespace CasparCGPlayout
             _cpi.position = frame - _cpi.inFrames;
             _cpi.length = Convert.ToInt32(double.Parse(oscMessage.Data[1].ToString()));
 
-
             _timePast = TimeUtils.frameToHHMMSSFF(_cpi.position, _cpi.framerate);
-            _timeLeft = TimeUtils.frameToHHMMSSFF(((_cpi.length - _cpi.inFrames) - _cpi.outFrames) - _cpi.position, _cpi.framerate);
-            _timeLength = TimeUtils.frameToHHMMSSFF(((_cpi.length - _cpi.inFrames) - _cpi.outFrames), _cpi.framerate);
+            _timeLeft = TimeUtils.frameToHHMMSSFF(((_cpi.length - _cpi.inFrames) - (_cpi.length - _cpi.outFrames)) - _cpi.position, _cpi.framerate);
+            _timeLength = TimeUtils.frameToHHMMSSFF(((_cpi.length - _cpi.inFrames) - (_cpi.length - _cpi.outFrames)), _cpi.framerate);
 
-            Logger.Debug("Frame: " + _cpi.position + " of " + _cpi.length + " (" + _timePast + " / " + _timeLeft + ")\n");
+            _framePast = _cpi.position;
+            _frameLeft = ((_cpi.length - _cpi.inFrames) - (_cpi.length - _cpi.outFrames)) - _cpi.position;
+            _frameLength = ((_cpi.length - _cpi.inFrames) - (_cpi.length - _cpi.outFrames));
 
-            checkItemPlayingLastFrames((_cpi.length - _cpi.inFrames) - _cpi.outFrames);
+            Logger.Debug("Frame: " + _cpi.position + " of " + _cpi.length + " (" + _timePast + " / " + _timeLeft + ")\n"); //ish
+
+            checkItemPlayingLastFrames(_cpi.outFrames);
             //CheckItemDuration();
 
             try
@@ -295,6 +313,8 @@ namespace CasparCGPlayout
                                                  lblCountDown.Text = _timeLeft;
                                                  lblCountUp.Text = _timePast;
                                                  lblLength.Text = _timeLength;
+                                                 pgbcountdown.Maximum = _frameLength;
+                                                 pgbcountdown.Value = _frameLeft;
                                              }));
             }
             catch (InvalidOperationException ex)
@@ -350,7 +370,7 @@ namespace CasparCGPlayout
             //If current position is at or greater than outframes (p) then go next
             if (tmrLastSeconds.Enabled)
             {
-                if (_cpi.position == p)
+                if (_cpi.position >= p-2)
                 {
                     Logger.Info("******* GO NEXT *******");
                     _cpi.index++;
@@ -361,21 +381,24 @@ namespace CasparCGPlayout
 
         private void GoNext()
         {
-            var item = (ListBoxItem) ListRunningOrder.Items[_cpi.lastPlayedIndex];
+
+            ListBoxVideoItem item = (ListBoxVideoItem)ListRunningOrder.Items[_cpi.lastPlayedIndex];
 
             if (!boolHold)
             {
                 Invoke(new MethodInvoker(delegate
                                              {
                                                  stopLastSecondsandResetColor();
-
-                                                 item.isPlaying = false;
-                                                 item = (ListBoxItem) ListRunningOrder.Items[_cpi.index];
-
                                                  if (_cpi.index == ListRunningOrder.Items.Count)
                                                  {
                                                      _cpi.index = 0;
                                                  } //Loop
+
+                                                 item.isPlaying = false;
+                                                 item = (ListBoxVideoItem)ListRunningOrder.Items[_cpi.index];
+
+                                                 
+
                                                  ListRunningOrder.SetSelected(_cpi.index, true);
 
                                                  _cpi.lastPlayedIndex = _cpi.index;
@@ -401,10 +424,11 @@ namespace CasparCGPlayout
                 {
                     case TypeEnum.Video:
                         stopLastSecondsandResetColor();
-                        _casparDevice.Channels[_channelId].Stop(VideoLayer);
+                        _casparDevice.Channels[casparServerChannelID].Stop(VideoLayer);
                         break;
                 }
-            }
+            } 
+
         }
 
 
@@ -416,33 +440,29 @@ namespace CasparCGPlayout
             lblCountDown.BackColor = SystemColors.ControlDark;
             lblRemainDesc.BackColor = SystemColors.ControlDark;
             panel3.BackColor = SystemColors.ControlDark;
-            _casparDevice.Channels[_channelId].Stop();
+            _casparDevice.Channels[casparServerChannelID].Stop();
         }
 
         private void buildAddCg(int selectedIndex)
         {
+            /*
             var item = (ListBoxCGItem) ListRunningOrder.Items[_cpi.index];
-
-#pragma warning disable 612,618
+            
             var cg = new CasparCGItem("BoltonNS", NowNextCgLayer, false);
-#pragma warning restore 612,618
 
             var cgxml = new List<CGDataPair>{new CGDataPair("f0", "Olly Murs"), new CGDataPair("f1", "Dance with me tonight")};
             cg.Data.AddRange(cgxml);
 
             //CasparItem c_item = new CasparItem(VIDEO_LAYER, "AMB", new Transition(TransitionType.MIX, 300));
-            //casparDevice.Channels[CHANNEL_ID].Load(c_item);
-            //casparDevice.Channels[CHANNEL_ID].Play(c_item.VideoLayer);
+            //_casparDevice.Channels[CHANNEL_ID].Load(c_item);
+            //_casparDevice.Channels[CHANNEL_ID].Play(c_item.VideoLayer);
 
 
             var cItem2 = new CasparItem(AnnouncerLayer, "test", new Transition(TransitionType.MIX, 50));
             _casparDevice.Channels[_channelId].Load(cItem2);
             _casparDevice.Channels[_channelId].Play(cItem2.VideoLayer);
 
-
-#pragma warning disable 612,618
             _casparDevice.Channels[_channelId].CG.Add(cg, false);
-#pragma warning restore 612,618
             _casparDevice.Channels[_channelId].CG.Play(NowNextCgLayer);
 
             _cpi.framerate = 25;
@@ -457,22 +477,21 @@ namespace CasparCGPlayout
 
             item.isPlaying = true;
             tmrClockStarts.Enabled = false;
+             */
         }
+         
 
         private void buildPlayVideo(int currentPlayingItemIndex)
         {
-            var item = (ListBoxVideoItem) ListRunningOrder.Items[_cpi.index];
-            //CasparItem c_item = new CasparItem(VIDEO_LAYER, item.ClipID, new Transition(TransitionType.MIX, iVideoMixTime), item.InFrames);
-
-            var cItem = new CasparItem(VideoLayer, item.clipID, new Transition(TransitionType.CUT, 0), item.inFrames);
+           ListBoxVideoItem item = (ListBoxVideoItem) ListRunningOrder.Items[_cpi.index];
+           CasparItem cItem = new CasparItem(VideoLayer, item.clipID, new Transition(TransitionType.MIX, videoMixTime), item.inFrames);
 
             Logger.Info("Built CasparItem: " + cItem);
 
-            _casparDevice.Channels[_channelId].LoadBG(cItem);
-
+            _casparDevice.Channels[casparServerChannelID].LoadBG(cItem);
             Logger.Info("Playing CasparItem: " + cItem);
 
-            _casparDevice.Channels[_channelId].Play(cItem.VideoLayer);
+            _casparDevice.Channels[casparServerChannelID].Play(cItem.VideoLayer);
             item.isPlaying = true;
             tmrClockStarts.Enabled = false;
         }
@@ -489,12 +508,7 @@ namespace CasparCGPlayout
 
         private void ListBox1DoubleClick(object sender, EventArgs e)
         {
-            string[] all = Assembly.GetEntryAssembly().GetManifestResourceNames();
-
-            foreach (string one in all)
-            {
-                listBox1.Items.Add(one);
-            }
+            
         }
 
         #region GUI
@@ -503,8 +517,8 @@ namespace CasparCGPlayout
         {
             if (_casparDevice.IsConnected)
             {
-                if (CheckAvailableChannels(_casparDevice, _channelId))
-                    _casparDevice.Channels[_channelId].Stop();
+                if (CheckAvailableChannels(_casparDevice, casparServerChannelID))
+                    _casparDevice.Channels[casparServerChannelID].Stop();
             }
         }
 
@@ -532,7 +546,7 @@ namespace CasparCGPlayout
         private void TsLabelStopallClick(object sender, EventArgs e)
         {
             stopLastSecondsandResetColor();
-            _casparDevice.Channels[_channelId].Clear();
+            _casparDevice.Channels[casparServerChannelID].Clear();
         }
 
         private void ShowAbout()
@@ -557,13 +571,22 @@ namespace CasparCGPlayout
 
         private void setupCasparCGDevice()
         {
+            changeControlStatus(true);
+            label1.Text = "Connecting to CasparCG Server (AMCP)";
+            changeControlStatus(false);
+            
+            Logger.Debug("Connecting to CasparCG Server (AMCP)");
             _casparDevice.Settings.Hostname = casparServerIp;
             _casparDevice.Settings.Port = casparServerAmcpPort;
             _casparDevice.Settings.AutoConnect = false;
             _casparDevice.Connected += casparAmcpConnected;
             _casparDevice.Disconnected += caspar_AMCP_Disconnected;
             _casparDevice.FailedConnect += casparDevice_AMCPFailed_Connect;
+            _casparDevice.UpdatedChannels += new EventHandler<EventArgs>(casparDevice_UpdatedChannels);
+            
             _casparDevice.Connect();
+
+            
         }
 
         private Boolean CheckAvailableChannels(CasparDevice casparDevice, int channelId)
@@ -578,12 +601,16 @@ namespace CasparCGPlayout
         {
             if (_casparDevice.IsConnected)
             {
+                changeControlStatus(true);
+                label1.Text = "Connecting to CasparCG (OSC)";
+                changeControlStatus(false);
+
                 Logger.Info("OSC Client Connect");
-                _oscServer = new OscServer(TransportType.Tcp, IPAddress.Parse(casparServerIp), casparServerOscPort);
+                _oscServer = new OscServer(Bespoke.Common.Net.TransportType.Tcp, IPAddress.Parse(casparServerIp), casparServerOscPort);
 
                 _oscServer.MessageReceived += oscServerMessageReceived;
-                //osc_server.Connected += new OscServerConnectedHandler(osc_server_Connected);
-                //osc_server.Disconnected += new OscServerDisconnectedHandler(osc_server_Disconnected);
+                //_oscServer.Connected += new OscServerConnectedHandler(osc_server_Connected);
+                //_oscServer.Disconnected += new OscServerDisconnectedHandler(osc_server_Disconnected);
                 //Need to build in Connected/Disconnected/FailedConnect Event Handlers
                 _oscServer.FilterRegisteredMethods = false;
                 _oscServer.Start();
@@ -592,6 +619,11 @@ namespace CasparCGPlayout
 
         private void connectDatabase()
         {
+            
+            changeControlStatus(true);
+            label1.Text = "Connecting to Database..";
+            changeControlStatus(false);
+            
             String connectionString = DatabaseConnectionUtils.CreateConnStr(casparDatabaseServerHostname,
                                                                             casparDatabaseServerDatabase,
                                                                             casparDatabaseServerUsername,
@@ -606,8 +638,7 @@ namespace CasparCGPlayout
             }
             catch (MySqlException e)
             {
-                if (
-                    Resources.Form1_connectDatabase_FATAL__Can_t_connect_to_MySQL_Server__Exiting != null && MessageBox.Show(text: Resources.Form1_connectDatabase_FATAL__Can_t_connect_to_MySQL_Server__Exiting, caption: Resources.Form1_connectDatabase_CasparCG_Playout, buttons: MessageBoxButtons.OK) == DialogResult.OK)
+                if (Resources.Form1_connectDatabase_FATAL__Can_t_connect_to_MySQL_Server__Exiting != null && MessageBox.Show(text: Resources.Form1_connectDatabase_FATAL__Can_t_connect_to_MySQL_Server__Exiting, caption: Resources.Form1_connectDatabase_CasparCG_Playout, buttons: MessageBoxButtons.OK) == DialogResult.OK)
                 {
                     Application.Exit();
                 }
@@ -631,27 +662,32 @@ namespace CasparCGPlayout
                         switch ((TypeEnum)Enum.Parse(typeof (TypeEnum), rdr.GetString("type")))
                         {
                             case TypeEnum.Video:
-                                var videoitem = new ListBoxVideoItem(1, "00:00:00", rdr.GetString("item_id"),
+                                var videoitem = new ListBoxVideoItem(1, "00:00:00", rdr.GetString("caspar_filename"),
                                                                      rdr.GetString("display1"), rdr.GetString("display2"),
                                                                      rdr.GetTimeSpan("timespan"),
                                                                      (TypeEnum) Enum.Parse(typeof (TypeEnum), rdr.GetString("type")),
                                                                      (WhatNextEnum) Enum.Parse(typeof (WhatNextEnum), rdr.GetString("whatnext")),
-                                                                     rdr.GetInt32("inframes"), rdr.GetInt32("outframes"), BytestoImage((byte[])rdr["thumbnail"]));
-                                ListRunningOrder.Items.Add(videoitem);
+                                                                     rdr.GetInt32("inframes"), rdr.GetInt32("outframes"), BytestoImage((byte[])rdr["thumbnail"]),
+                                                                     (CatergoryEnum) Enum.Parse(typeof (CatergoryEnum), rdr.GetString("catergory")));
+                               ListRunningOrder.Items.Add(videoitem);
                                 break;
                             case TypeEnum.CG:
-                                var cgitem = new ListBoxCGItem(1, "00:00:00", rdr.GetString("item_id"),
+                                var cgitem = new ListBoxCGItem(1, "00:00:00", rdr.GetString("caspar_filename"),
                                                                rdr.GetString("display1"), rdr.GetString("display2"),
                                                                rdr.GetTimeSpan("timespan"),
                                                                (TypeEnum)
                                                                Enum.Parse(typeof (TypeEnum), rdr.GetString("type")),
                                                                (WhatNextEnum)
                                                                Enum.Parse(typeof (WhatNextEnum), rdr.GetString("whatnext")),
-                                                               rdr.GetInt32("inframes"), rdr.GetInt32("outframes"), BytestoImage((byte[])rdr["thumbnail"]));
-                                ListRunningOrder.Items.Add(cgitem);
-                                break;
+                                                               rdr.GetInt32("inframes"), rdr.GetInt32("outframes"), BytestoImage((byte[])rdr["thumbnail"]),
+                                                               (CatergoryEnum) Enum.Parse(typeof (CatergoryEnum), rdr.GetString("catergory")));
+                               ListRunningOrder.Items.Add(cgitem);
+                               break;
                         }
                     }
+                    label1.Visible = false;
+                    panel5.Visible = false;
+                    changeControlStatus(true);
                 }
 
                 catch (Exception)
@@ -660,11 +696,14 @@ namespace CasparCGPlayout
                 }
             }
 
+            
             if (ListRunningOrder.Items.Count != 0)
             {
                 ListRunningOrder.SelectedIndex = 0;
                 _cpi.index = 0;
             }
+
+             
         }
 
         private Image BytestoImage(byte[] p)
@@ -711,18 +750,12 @@ namespace CasparCGPlayout
 
         private void casparAmcpConnected(object sender, NetworkEventArgs e)
         {
-            if (e == null) throw new ArgumentNullException("e");
-            /* if (!CheckAvailableChannels(casparDevice, CHANNEL_ID))
-            {
-                if (MessageBox.Show("CasparCG Server does not have requested Channel: " + CHANNEL_ID + "\nPlease reconfigure!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation) == DialogResult.OK)
-                {
-                    Application.Exit();
-                }
-                else { Application.Exit(); }
-            }
-            */
+            if (e == null) throw new ArgumentNullException("e");            
 
-            Logger.Info("Caspar AMCInfoient Connected");
+            Logger.Info("Caspar AMCient Connected");
+            changeControlStatus(true);
+            label1.Text = "Connected to CasparCG Server... Waiting for Channels";
+            changeControlStatus(false);
             //tmrConnectionCheck.Enabled = true;
             tmrClockStarts.Enabled = true;
             changeControlStatus(true);
@@ -740,10 +773,29 @@ namespace CasparCGPlayout
             casparDevice_AMCPFailed_Connect(sender, e);
         }
 
+        private void casparDevice_UpdatedChannels(object sender, EventArgs e)
+        {
+            Logger.Info("Retrieved Caspar CG Channels List");
+            //label1.Text = "Got Channel List...";
+            WaitingForChannelList = false;
+            if (!CheckAvailableChannels(_casparDevice, casparServerChannelID))
+            {
+                if (MessageBox.Show("CasparCG Server does not have requested Channel: " + casparServerChannelID + "\nPlease reconfigure!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation) == DialogResult.OK)
+                {
+                    Application.Exit();
+                }
+                else { Application.Exit(); }
+            } 
+            
+
+        }
+
         private void casparDevice_AMCPFailed_Connect(object sender, NetworkEventArgs e)
         {
             tmrConnectionCheck.Enabled = false;
             tmrClockStarts.Enabled = false;
+
+            changeControlStatus(false);
 
             Invoke(new MethodInvoker(delegate
                                          {
@@ -776,9 +828,10 @@ namespace CasparCGPlayout
                                              foreach (Control c in Controls)
                                              {
                                                  c.Enabled = p;
-                                                 //c.Visible = p;
                                              }
+                                             
                                          }));
+           
         }
 
         #endregion
@@ -840,42 +893,7 @@ namespace CasparCGPlayout
             Logger.Debug("ConnectionCheck Ticker Ticking");
         }
 
-        private void timer1Tick1(object sender, EventArgs e)
-        {
-            /* DateTime basetime = DateTime.Now;
-
-            
-
-            
-            exListBox1.Items[exListBox1.SelectedIndex];
-            List<Rectangle> rects = firstitem.GetRects();
-            firstitem.TimeStart = TimeUtils.Fix0Padding(basetime.Hour) + ":" + TimeUtils.Fix0Padding(basetime.Minute) + ":" + TimeUtils.Fix0Padding(basetime.Second);
-            exListBox1.Invalidate(rects[0]);
-
-            DateTime dt = basetime;
-
-            for (int i = exListBox1.SelectedIndex + 1; i < (exListBox1.Items.Count - exListBox1.SelectedIndex); i++)
-            {
-                exListBoxVideoItem item = ((exListBoxVideoItem)exListBox1.Items[i]);
-                dt = dt.Add(item.LengthOfClip);
-
-                item.TimeStart = TimeUtils.Fix0Padding(dt.Hour) + ":" + TimeUtils.Fix0Padding(dt.Minute) + ":" + TimeUtils.Fix0Padding(dt.Second);
-                List<Rectangle> r = item.GetRects();
-                exListBox1.Invalidate(r[0]);
-            }
-            */
-        }
-
-        private void cgTimerfinish(object source, ElapsedEventArgs e)
-        {
-            ((System.Timers.Timer) source).Stop();
-            _casparDevice.Channels[_channelId].CG.Stop(NowNextCgLayer);
-            tmrCGTiming.Enabled = false;
-            //Wait for CG to finish somehow... Very Hacky 
-            Thread.Sleep(1000);
-
-            GoNext();
-        }
+      
 
         #endregion
 
@@ -896,12 +914,17 @@ namespace CasparCGPlayout
                 btnDogToggle.BackColor = _playingGreen;
                 channelDogVisible = true;
 
-                //ICGComponentData cg = new ICGComponentData();
-                
-               
+                CasparCGItem cg = new CasparCGItem("channelbrand",500,false);
+                CasparCGDataCollection cgData = new CasparCGDataCollection();
 
-                //_casparDevice.Channels[_channelId].CG.Add(cg, false);
-                //_casparDevice.Channels[_channelId].CG.Play(cg.Layer);
+                // build data
+                //cgData.SetData("f0", "Name of Caller");
+                //cgData.SetData("f1", "Where they from?");
+
+
+                _casparDevice.Channels[casparServerChannelID].CG.Add(cg);
+                _casparDevice.Channels[casparServerChannelID].CG.Update(cg.Layer, cgData);
+                _casparDevice.Channels[casparServerChannelID].CG.Play(cg.Layer);
             }
             else
             {
@@ -909,7 +932,7 @@ namespace CasparCGPlayout
                     btnDogToggle.Text = Resources.Form1_btnDogToggle_Click_Channel_Dog_Disabled;
                 btnDogToggle.BackColor = _stoppedGrey;
                 channelDogVisible = false;
-                _casparDevice.Channels[_channelId].CG.Stop(500);
+                _casparDevice.Channels[casparServerChannelID].CG.Stop(500);
             }
         }
 
@@ -932,5 +955,25 @@ namespace CasparCGPlayout
         private delegate void LblUpMessageDel(String info);
 
         #endregion
+
+        private void pictureBox2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ListRunningOrder_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void digitalStudioClock1_Load(object sender, EventArgs e)
+        {
+        }
+
+
+
+
+
+        
     }
 }

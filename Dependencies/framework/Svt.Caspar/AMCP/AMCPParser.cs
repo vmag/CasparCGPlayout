@@ -26,7 +26,14 @@ namespace Svt.Caspar.AMCP
 		INFO,
 		DATA,
 		CLEAR,
-		SET
+		SET,
+        MIXER,
+        CALL,
+        REMOVE,
+        ADD,
+        SWAP,
+        STATUS,
+        Undefined
 	}
 	internal enum AMCPError
 	{
@@ -71,7 +78,7 @@ namespace Svt.Caspar.AMCP
 			set { channel_ = value; }
 		}	
 	
-		private readonly List<string> data_ = new List<string>();
+		private List<string> data_ = new List<string>();
 		public List<string> Data
 		{
 			get { return data_; }
@@ -101,7 +108,7 @@ namespace Svt.Caspar.AMCP
 			currentResponseLine_ += data;
 
 			int delimiterPosition = -1;
-			while ((delimiterPosition = currentResponseLine_.IndexOf(CommandDelimiter, System.StringComparison.Ordinal)) != -1)
+			while ((delimiterPosition = currentResponseLine_.IndexOf(CommandDelimiter)) != -1)
 			{
 				string line = currentResponseLine_.Substring(0, delimiterPosition);
 				ParseLine(line);
@@ -179,8 +186,17 @@ namespace Svt.Caspar.AMCP
 
 		bool ParseSuccessHeader(string[] tokens)
 		{
-			if (tokens.Length >= 3)
-				nextParserEventArgs_.Command = (AMCPCommand)Enum.Parse(typeof(AMCPCommand), tokens[1]);
+            if (tokens.Length >= 3)
+            {
+                try
+                {
+                    nextParserEventArgs_.Command = (AMCPCommand)Enum.Parse(typeof(AMCPCommand), tokens[1]);
+                }
+                catch 
+                {
+                    nextParserEventArgs_.Command = AMCPCommand.Undefined;
+                }
+            }
 
 			if (tokens.Length >= 4)
 				nextParserEventArgs_.Subcommand = tokens[2];
@@ -205,7 +221,16 @@ namespace Svt.Caspar.AMCP
 			nextParserEventArgs_.Error = ErrorFactory(tokens[0]);
 
 			if (tokens.Length >= 3)
-				nextParserEventArgs_.Command = (AMCPCommand)Enum.Parse(typeof(AMCPCommand), tokens[1]);
+            {
+                try
+                {
+                    nextParserEventArgs_.Command = (AMCPCommand)Enum.Parse(typeof(AMCPCommand), tokens[1]);
+                }
+                catch
+                {
+                    nextParserEventArgs_.Command = AMCPCommand.Undefined;
+                }
+            }
 
 			return true;
 		}
@@ -215,7 +240,16 @@ namespace Svt.Caspar.AMCP
 			nextParserEventArgs_.Error = ErrorFactory(tokens[0]);
 
 			if (tokens.Length >= 3)
-				nextParserEventArgs_.Command = (AMCPCommand)Enum.Parse(typeof(AMCPCommand), tokens[1]);
+            {
+                try
+                {
+                    nextParserEventArgs_.Command = (AMCPCommand)Enum.Parse(typeof(AMCPCommand), tokens[1]);
+                }
+                catch
+                {
+                    nextParserEventArgs_.Command = AMCPCommand.Undefined;
+                }
+            }
 
 			return true;
 		}
